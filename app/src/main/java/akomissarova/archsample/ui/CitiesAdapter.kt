@@ -6,13 +6,14 @@ import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.TextView
 
 class CitiesAdapter : RecyclerView.Adapter<CityViewHolder>() {
 
     private var items = listOf<City>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CityViewHolder {
-        return CityViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.city_item, parent))
+        return CityViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.city_item, parent, false))
     }
 
     override fun getItemCount(): Int {
@@ -20,7 +21,11 @@ class CitiesAdapter : RecyclerView.Adapter<CityViewHolder>() {
     }
 
     override fun onBindViewHolder(holder: CityViewHolder, position: Int) {
+        holder.bind(getItem(position))
+    }
 
+    private fun getItem(position: Int): City {
+        return items.get(position)
     }
 
     fun setList(cities: List<City>) {
@@ -31,5 +36,15 @@ class CitiesAdapter : RecyclerView.Adapter<CityViewHolder>() {
 }
 
 class CityViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
+
+    lateinit var nameField: TextView
+
+    init {
+        nameField = itemView.findViewById(R.id.cityName)
+    }
+
+    fun bind(item: City) {
+        nameField.text = item.name
+    }
 
 }
