@@ -1,28 +1,25 @@
 package akomissarova.archsample.viewmodel
 
 import akomissarova.archsample.model.City
+import akomissarova.archsample.repository.BasicCitiesRepository
 import android.arch.lifecycle.LiveData
-import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.Transformations
 import android.arch.lifecycle.ViewModel
 
-class CitiesViewModel: ViewModel() {
+class CitiesViewModel(private val repository: BasicCitiesRepository) : ViewModel() {
 
-    val citiesData = MutableLiveData<List<City>>()
+    val citiesData: LiveData<List<City>> by lazy {
+        Transformations.map(getCities(), { cities ->
+            cities
+        })
+    }
 
     fun getList(): LiveData<List<City>> {
-        citiesData.value = getCities()
         return citiesData
     }
 
-    private fun getCities(): List<City> {
-        return listOf<City>(
-                City("Madrid"),
-                City("Berlin"),
-                City("New York"),
-                City("Ottawa"),
-                City("Sydney"),
-                City("London")
-        )
+    private fun getCities(): LiveData<List<City>> {
+        return repository.getCitiesList()
     }
 
 }
