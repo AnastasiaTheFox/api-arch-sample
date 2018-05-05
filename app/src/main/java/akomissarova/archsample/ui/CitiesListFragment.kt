@@ -35,7 +35,7 @@ class CitiesListFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        viewModel = ViewModelProviders.of(this).get(CitiesViewModel::class.java)
+        viewModel = ViewModelProviders.of(this, SimpleProvider.createCitiesViewModelFactory()).get(CitiesViewModel::class.java)
         viewModel?.getList()?.observe(this, Observer { it?.let { adapter.setList(it) } })
     }
 
