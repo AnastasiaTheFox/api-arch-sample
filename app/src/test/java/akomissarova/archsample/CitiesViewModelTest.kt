@@ -11,6 +11,7 @@ import com.nhaarman.mockito_kotlin.mock
 import com.nhaarman.mockito_kotlin.verify
 import junit.framework.Assert.assertNotSame
 import junit.framework.Assert.assertSame
+import kotlinx.coroutines.experimental.runBlocking
 import org.junit.After
 import org.junit.Before
 import org.junit.Rule
@@ -29,7 +30,7 @@ class CitiesViewModelTest {
     @Mock
     private lateinit var repository : BasicCitiesRepository
     private val defaultCities = getCities()
-    lateinit var viewModel: CitiesViewModel
+    private lateinit var viewModel: CitiesViewModel
 
     @Before
     fun setup() {
@@ -46,11 +47,14 @@ class CitiesViewModelTest {
     fun returnsCitiesListLiveData_onObserver() {
         val observer : Observer<List<City>> = mock()
         val citiesData = getMockCities()
-        `when`(repository.getCitiesList()).thenReturn(citiesData)
-        viewModel.getList().observeForever(observer)
+        runBlocking {
+            `when`(repository.getCitiesList()).thenReturn(citiesData)
+            viewModel.getList().observeForever(observer)
 
-        assertSame(viewModel.getList(), viewModel.getList())
-        verify(repository).getCitiesList()
+            assertSame(viewModel.getList(), viewModel.getList())
+            verify(repository).getCitiesList()
+        }
+
         verify(observer).onChanged(defaultCities)
         assertNotSame(citiesData, viewModel.getList())
     }

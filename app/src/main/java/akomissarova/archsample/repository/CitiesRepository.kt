@@ -1,26 +1,40 @@
 package akomissarova.archsample.repository
 
 import akomissarova.archsample.model.City
+import akomissarova.archsample.network.CitiesService
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
+import android.util.Log
+import kotlinx.coroutines.experimental.async
+import kotlinx.coroutines.experimental.launch
+import kotlinx.coroutines.experimental.runBlocking
 
-class CitiesRepository: BasicCitiesRepository {
+class CitiesRepository(private val service: CitiesService) : BasicCitiesRepository {
 
-    override fun getCitiesList(): LiveData<List<City>> {
-        val citiesData = MutableLiveData<List<City>>()
-        citiesData.value = getCities()
-        return citiesData
+    private var citiesData: MutableLiveData<List<City>>? = null
+
+    private fun initCitiesData(): MutableLiveData<List<City>> {
+        val data = MutableLiveData<List<City>>()
+        runBlocking {
+            async {
+                getCitiesAsync()
+            }.await()
+                    .let {
+                        data.value = it
+                    }
+        }
+        return data
     }
 
-    private fun getCities(): List<City> {
-        return listOf<City>(
-                City("Madrid"),
-                City("Berlin"),
-                City("New York"),
-                City("Ottawa"),
-                City("Sydney"),
-                City("London")
-        )
+    override fun getCitiesList(): LiveData<List<City>> {
+        if (citiesData == null) {
+            citiesData = initCitiesData()
+        }
+        return citiesData!!
+    }
+
+    fun getCitiesAsync(): List<City>? {
+        return service.getCities().execute().body()
     }
 
 }

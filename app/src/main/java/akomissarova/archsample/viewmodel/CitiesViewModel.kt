@@ -8,14 +8,15 @@ import android.arch.lifecycle.ViewModel
 
 class CitiesViewModel(private val repository: BasicCitiesRepository) : ViewModel() {
 
-    val citiesData: LiveData<List<City>> by lazy {
-        Transformations.map(getCities(), { cities ->
-            cities
-        })
-    }
+    private var citiesData: LiveData<List<City>>? = null
 
     fun getList(): LiveData<List<City>> {
-        return citiesData
+        if (citiesData == null) {
+            citiesData = Transformations.map(getCities(), { cities ->
+                cities
+            })
+        }
+        return citiesData!!
     }
 
     private fun getCities(): LiveData<List<City>> {
