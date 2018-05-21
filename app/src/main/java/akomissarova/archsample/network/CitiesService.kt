@@ -1,10 +1,12 @@
 package akomissarova.archsample.network
 
-import akomissarova.archsample.model.City
+import akomissarova.archsample.model.UrbanAreaResponse
 import retrofit2.Call
+import retrofit2.http.GET
 
 interface CitiesService {
 
-    fun getCities() : Call<List<City>>
+    @GET("urban_areas")
+    fun getCities() : Call<UrbanAreaResponse>
 
 }

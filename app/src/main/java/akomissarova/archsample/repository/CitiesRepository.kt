@@ -33,7 +33,7 @@ class CitiesRepository(private val service: CitiesService) : BasicCitiesReposito
 
     fun getCitiesAsync(): List<City>? {
         val response = service.getCities().execute()
-        return response.body()
+        return response.body()?.links?.list
     }
 
 }
