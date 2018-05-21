@@ -4,9 +4,7 @@ import akomissarova.archsample.model.City
 import akomissarova.archsample.network.CitiesService
 import android.arch.lifecycle.LiveData
 import android.arch.lifecycle.MutableLiveData
-import android.util.Log
 import kotlinx.coroutines.experimental.async
-import kotlinx.coroutines.experimental.launch
 import kotlinx.coroutines.experimental.runBlocking
 
 class CitiesRepository(private val service: CitiesService) : BasicCitiesRepository {
@@ -34,7 +32,8 @@ class CitiesRepository(private val service: CitiesService) : BasicCitiesReposito
     }
 
     fun getCitiesAsync(): List<City>? {
-        return service.getCities().execute().body()
+        val response = service.getCities().execute()
+        return response.body()
     }
 
 }

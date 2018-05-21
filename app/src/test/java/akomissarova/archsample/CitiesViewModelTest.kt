@@ -2,6 +2,7 @@ package akomissarova.archsample
 
 import akomissarova.archsample.model.City
 import akomissarova.archsample.repository.BasicCitiesRepository
+import akomissarova.archsample.utils.TestCities.getCities
 import akomissarova.archsample.viewmodel.CitiesViewModel
 import android.arch.core.executor.testing.InstantTaskExecutorRule
 import android.arch.lifecycle.LiveData
@@ -44,7 +45,7 @@ class CitiesViewModelTest {
     }
 
     @Test
-    fun returnsCitiesListLiveData_onObserver() {
+    fun `getList() returns cities list liveData with correct cities when observer is added`() {
         val observer : Observer<List<City>> = mock()
         val citiesData = getMockCities()
         runBlocking {
@@ -65,14 +66,4 @@ class CitiesViewModelTest {
         return citiesData
     }
 
-    private fun getCities(): List<City> {
-        return listOf(
-                City("Madrid"),
-                City("Berlin"),
-                City("New York"),
-                City("Ottawa"),
-                City("Sydney"),
-                City("London")
-        )
-    }
 }

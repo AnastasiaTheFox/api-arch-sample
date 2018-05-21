@@ -3,6 +3,7 @@ package akomissarova.archsample
 import akomissarova.archsample.model.City
 import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.repository.CitiesRepository
+import akomissarova.archsample.utils.TestCities.getCities
 import android.arch.core.executor.testing.InstantTaskExecutorRule
 import android.arch.lifecycle.Observer
 import com.nhaarman.mockito_kotlin.mock
@@ -40,7 +41,7 @@ class CitiesRepositoryTest {
     }
 
     @Test
-    fun getCitiesReturnsListFromService() {
+    fun `getCities() returns list from service`() {
 
         val observer : Observer<List<City>> = mock()
         whenever(service.getCities()).
@@ -50,15 +51,5 @@ class CitiesRepositoryTest {
 
         assertEquals(repository.getCitiesList().value, getCities())
         verify(service).getCities()
-    }
-
-    private fun getCities(): List<City> {
-        return listOf(
-                City("Madrid"),
-                City("Berlin"),
-                City("New York"),
-                City("Ottawa"),
-                City("London")
-        )
     }
 }
