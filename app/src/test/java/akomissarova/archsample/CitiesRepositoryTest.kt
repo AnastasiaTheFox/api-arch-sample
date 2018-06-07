@@ -46,15 +46,24 @@ class CitiesRepositoryTest {
     }
 
     @Test
-    fun `getCities() returns empty list when error is received`() {
+    fun `getCities() returns error when error is received`() {
 
-        val observer : Observer<List<UrbanArea>> = mock()
+        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         whenever(service.getCities()).
                 thenReturn(Calls.response(Response.error(404, ResponseBody.create(null, ""))))
 
-        repository.getCitiesList().observeForever(observer)
+        repository.getCitiesListMonad().observeForever(observer)
 
-        assertEquals(repository.getCitiesList().value, emptyList<UrbanArea>())
+        var result: List<UrbanArea>? = null
+        var error: FetchError? = null
+        repository.getCitiesListMonad().value!!.fold({
+            error = it
+        }, {
+            result = it
+        })
+
+        assertNull(result)
+        assertNotNull(error)
         verify(service).getCities()
     }
 

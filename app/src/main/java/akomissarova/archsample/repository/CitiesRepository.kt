@@ -11,7 +11,6 @@ import kotlinx.coroutines.experimental.runBlocking
 
 class CitiesRepository(private val service: CitiesService) : BasicCitiesRepository {
 
-    private var citiesData: MutableLiveData<List<UrbanArea>>? = null
     private var citiesDataMonad: MutableLiveData<Either<FetchError, List<UrbanArea>>>? = null
 
     private fun initCitiesDataMonad(): MutableLiveData<Either<FetchError, List<UrbanArea>>> {
@@ -27,36 +26,11 @@ class CitiesRepository(private val service: CitiesService) : BasicCitiesReposito
         return data
     }
 
-    private fun initCitiesData(): MutableLiveData<List<UrbanArea>> {
-        val data = MutableLiveData<List<UrbanArea>>()
-        runBlocking {
-            async {
-                getCitiesAsync()
-            }.await()
-                    .let {
-                        data.value = it
-                    }
-        }
-        return data
-    }
-
-    override fun getCitiesList(): LiveData<List<UrbanArea>> {
-        if (citiesData == null) {
-            citiesData = initCitiesData()
-        }
-        return citiesData!!
-    }
-
     override fun getCitiesListMonad(): LiveData<Either<FetchError, List<UrbanArea>>> {
         if (citiesDataMonad == null) {
             citiesDataMonad = initCitiesDataMonad()
         }
         return citiesDataMonad!!
-    }
-
-    fun getCitiesAsync(): List<UrbanArea> {
-        val response = service.getCities().execute()
-        return response.body()?.links?.list ?: emptyList<UrbanArea>()
     }
 
     private fun getCitiesAsyncMonad(): Either<FetchError, List<UrbanArea>> {

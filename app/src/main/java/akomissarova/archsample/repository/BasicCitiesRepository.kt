@@ -7,6 +7,5 @@ import android.arch.lifecycle.LiveData
 
 interface BasicCitiesRepository {
 
-    fun getCitiesList(): LiveData<List<UrbanArea>>
     fun getCitiesListMonad(): LiveData<Either<FetchError, List<UrbanArea>>>
 }
