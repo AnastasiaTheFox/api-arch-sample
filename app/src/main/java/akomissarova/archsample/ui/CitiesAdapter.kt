@@ -1,6 +1,6 @@
 package akomissarova.archsample.ui
 
-import akomissarova.archsample.model.City
+import akomissarova.archsample.model.UrbanArea
 import akomissarova.archsample.R
 import android.support.v7.widget.RecyclerView
 import android.view.LayoutInflater
@@ -10,7 +10,7 @@ import android.widget.TextView
 
 class CitiesAdapter : RecyclerView.Adapter<CityViewHolder>() {
 
-    private var items = listOf<City>()
+    private var items = listOf<UrbanArea>()
 
     override fun onCreateViewHolder(parent: ViewGroup, viewType: Int): CityViewHolder {
         return CityViewHolder(LayoutInflater.from(parent.context).inflate(R.layout.city_item, parent, false))
@@ -24,11 +24,11 @@ class CitiesAdapter : RecyclerView.Adapter<CityViewHolder>() {
         holder.bind(getItem(position))
     }
 
-    private fun getItem(position: Int): City {
+    private fun getItem(position: Int): UrbanArea {
         return items.get(position)
     }
 
-    fun setList(cities: List<City>) {
+    fun setList(cities: List<UrbanArea>) {
         items = cities
         notifyDataSetChanged()
     }
@@ -43,7 +43,7 @@ class CityViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
         nameField = itemView.findViewById(R.id.cityName)
     }
 
-    fun bind(item: City) {
+    fun bind(item: UrbanArea) {
         nameField.text = item.name
     }
 

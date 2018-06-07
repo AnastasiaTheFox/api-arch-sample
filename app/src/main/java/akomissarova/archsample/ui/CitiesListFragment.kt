@@ -1,7 +1,6 @@
 package akomissarova.archsample.ui
 
 
-import akomissarova.archsample.model.City
 import akomissarova.archsample.R
 import akomissarova.archsample.di.SimpleProvider
 import akomissarova.archsample.viewmodel.CitiesViewModel

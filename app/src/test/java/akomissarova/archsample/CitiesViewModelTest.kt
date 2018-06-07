@@ -1,7 +1,8 @@
 package akomissarova.archsample
 
-import akomissarova.archsample.model.City
+import akomissarova.archsample.model.UrbanArea
 import akomissarova.archsample.repository.BasicCitiesRepository
+import akomissarova.archsample.utils.monads.Either
 import akomissarova.archsample.utils.TestCities.getCities
 import akomissarova.archsample.viewmodel.CitiesViewModel
 import android.arch.core.executor.testing.InstantTaskExecutorRule
@@ -46,7 +47,7 @@ class CitiesViewModelTest {
 
     @Test
     fun `getList() returns cities list liveData with correct cities when observer is added`() {
-        val observer : Observer<List<City>> = mock()
+        val observer : Observer<List<UrbanArea>> = mock()
         val citiesData = getMockCities()
         runBlocking {
             `when`(repository.getCitiesList()).thenReturn(citiesData)
@@ -60,9 +61,31 @@ class CitiesViewModelTest {
         assertNotSame(citiesData, viewModel.getList())
     }
 
-    fun getMockCities(): LiveData<List<City>> {
-        val citiesData = MutableLiveData<List<City>>()
+    @Test
+    fun `getList() returns cities list liveData with correct cities`() {
+        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
+        val citiesData = getMockCitiesMonad()
+        runBlocking {
+            `when`(repository.getCitiesListMonad()).thenReturn(citiesData)
+            viewModel.getListMonad().observeForever(observer)
+
+            assertSame(viewModel.getListMonad(), viewModel.getListMonad())
+            verify(repository).getCitiesListMonad()
+        }
+
+        verify(observer).onChanged(citiesData.value)
+        assertNotSame(citiesData, viewModel.getListMonad())
+    }
+
+    fun getMockCities(): LiveData<List<UrbanArea>> {
+        val citiesData = MutableLiveData<List<UrbanArea>>()
         citiesData.value = defaultCities
+        return citiesData
+    }
+
+    fun getMockCitiesMonad(): LiveData<Either<FetchError, List<UrbanArea>>> {
+        val citiesData = MutableLiveData<Either<FetchError, List<UrbanArea>>>()
+        citiesData.value = Either.Right(defaultCities)
         return citiesData
     }
 
