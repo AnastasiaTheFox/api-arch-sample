@@ -21,8 +21,10 @@ import org.junit.Test
 import org.junit.runner.RunWith
 import org.junit.runners.JUnit4
 import org.mockito.Mock
+import retrofit2.Call
 import retrofit2.Response
 import retrofit2.mock.Calls
+import java.net.SocketException
 
 @RunWith(JUnit4::class)
 class CitiesRepositoryTest {
@@ -51,6 +53,31 @@ class CitiesRepositoryTest {
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         whenever(service.getCities()).
                 thenReturn(Calls.response(Response.error(404, ResponseBody.create(null, ""))))
+
+        repository.getCitiesListMonad().observeForever(observer)
+
+        var result: List<UrbanArea>? = null
+        var error: FetchError? = null
+        repository.getCitiesListMonad().value!!.fold({
+            error = it
+        }, {
+            result = it
+        })
+
+        assertNull(result)
+        assertNotNull(error)
+        verify(service).getCities()
+    }
+
+    @Test
+    fun `getCities() returns an error when exception is thrown`() {
+        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
+        val mockCall : Call<UrbanAreaResponse> = mock()
+        whenever(service.getCities()).
+                thenReturn(mockCall)
+
+        whenever(mockCall.execute()).
+                thenThrow(SocketException())
 
         repository.getCitiesListMonad().observeForever(observer)
 

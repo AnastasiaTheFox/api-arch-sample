@@ -46,22 +46,6 @@ class CitiesViewModelTest {
     }
 
     @Test
-    fun `getList() returns cities list liveData with correct cities when observer is added`() {
-        val observer : Observer<List<UrbanArea>> = mock()
-        val citiesData = getMockCities()
-        runBlocking {
-            `when`(repository.getCitiesList()).thenReturn(citiesData)
-            viewModel.getList().observeForever(observer)
-
-            assertSame(viewModel.getList(), viewModel.getList())
-            verify(repository).getCitiesList()
-        }
-
-        verify(observer).onChanged(defaultCities)
-        assertNotSame(citiesData, viewModel.getList())
-    }
-
-    @Test
     fun `getList() returns cities list liveData with correct cities`() {
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         val citiesData = getMockCitiesMonad()

@@ -34,12 +34,15 @@ class CitiesRepository(private val service: CitiesService) : BasicCitiesReposito
     }
 
     private fun getCitiesAsyncMonad(): Either<FetchError, List<UrbanArea>> {
-        val response = service.getCities().execute()
-        response.body()?.links?.list?.let {
-            return EitherRight(it)
-        }
-        response.errorBody()?.let {
-            return EitherLeft(FetchError())
+        try {
+            val response = service.getCities().execute()
+            response?.body()?.links?.list?.let {
+                return EitherRight(it)
+            }
+            response?.errorBody()?.let {
+                return EitherLeft(FetchError())
+            }
+        } catch (e: Exception) {
         }
         return EitherLeft(FetchError())
     }
