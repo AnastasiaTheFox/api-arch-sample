@@ -1,17 +1,20 @@
 package akomissarova.archsample
 
+import akomissarova.archsample.database.UrbanAreaDao
 import akomissarova.archsample.model.Links
 import akomissarova.archsample.model.UrbanArea
 import akomissarova.archsample.model.UrbanAreaResponse
 import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.repository.CitiesRepository
-import akomissarova.archsample.repository.EitherLeft
 import akomissarova.archsample.repository.EitherRight
 import akomissarova.archsample.utils.TestCities.getCities
 import akomissarova.archsample.utils.monads.Either
 import android.arch.core.executor.testing.InstantTaskExecutorRule
 import android.arch.lifecycle.Observer
-import com.nhaarman.mockito_kotlin.*
+import com.nhaarman.mockito_kotlin.doReturn
+import com.nhaarman.mockito_kotlin.mock
+import com.nhaarman.mockito_kotlin.verify
+import com.nhaarman.mockito_kotlin.whenever
 import okhttp3.ResponseBody
 import org.junit.After
 import org.junit.Assert.*
@@ -35,11 +38,14 @@ class CitiesRepositoryTest {
     private lateinit var repository : CitiesRepository
     @Mock
     private lateinit var service : CitiesService
+    @Mock
+    private lateinit var dao: UrbanAreaDao
 
     @Before
     fun setup() {
         service = mock()
-        repository = CitiesRepository(service)
+        dao = mock()
+        repository = CitiesRepository(service, dao)
     }
 
     @After
@@ -98,8 +104,9 @@ class CitiesRepositoryTest {
     fun `getCities() returns list from service`() {
 
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
+        val cities = getCities()
         val content : Links = mock {
-            on { list } doReturn getCities()
+            on { list } doReturn cities
         }
         val response : UrbanAreaResponse = mock {
             on { links } doReturn content
@@ -123,5 +130,6 @@ class CitiesRepositoryTest {
         assertNull(error)
         assertEquals(result, getCities())
         verify(service).getCities()
+        verify(dao).saveCities(cities)
     }
 }

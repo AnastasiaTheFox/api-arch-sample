@@ -1,5 +1,7 @@
 package akomissarova.archsample.di
 
+import akomissarova.archsample.database.UrbanAreaDao
+import akomissarova.archsample.model.UrbanArea
 import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.repository.BasicCitiesRepository
 import akomissarova.archsample.repository.CitiesRepository
@@ -20,7 +22,11 @@ object SimpleProvider {
     }
 
     private fun getCitiesRepository(): BasicCitiesRepository {
-        return CitiesRepository(createCitiesService())
+        return CitiesRepository(createCitiesService(), object: UrbanAreaDao {
+            override fun saveCities(cities: List<UrbanArea>) {
+                //todo temporary stub
+            }
+        })
     }
 
     private fun createCitiesService(): CitiesService {

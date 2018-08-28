@@ -1,6 +1,7 @@
 package akomissarova.archsample.repository
 
 import akomissarova.archsample.FetchError
+import akomissarova.archsample.database.UrbanAreaDao
 import akomissarova.archsample.model.UrbanArea
 import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.utils.monads.Either
@@ -9,7 +10,8 @@ import android.arch.lifecycle.MutableLiveData
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.runBlocking
 
-class CitiesRepository(private val service: CitiesService) : BasicCitiesRepository {
+class CitiesRepository(private val service: CitiesService,
+                       private val citiesDao: UrbanAreaDao) : BasicCitiesRepository {
 
     private var citiesDataMonad: MutableLiveData<Either<FetchError, List<UrbanArea>>>? = null
 
@@ -37,6 +39,7 @@ class CitiesRepository(private val service: CitiesService) : BasicCitiesReposito
         try {
             val response = service.getCities().execute()
             response?.body()?.links?.list?.let {
+                citiesDao.saveCities(it)
                 return EitherRight(it)
             }
             response?.errorBody()?.let {
