@@ -13,7 +13,7 @@ abstract class LocationsDatabase: RoomDatabase() {
     companion object {
         private var INSTANCE: LocationsDatabase? = null
 
-        fun getInstance(context: Context): LocationsDatabase? {
+        fun getInstance(context: Context): LocationsDatabase {
             if (INSTANCE == null) {
                 synchronized(LocationsDatabase::class) {
                     INSTANCE = Room.databaseBuilder(context.getApplicationContext(),
@@ -21,7 +21,7 @@ abstract class LocationsDatabase: RoomDatabase() {
                             .build()
                 }
             }
-            return INSTANCE
+            return INSTANCE!!
         }
 
         fun destroyInstance() {

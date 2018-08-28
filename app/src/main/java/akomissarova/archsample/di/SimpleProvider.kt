@@ -1,11 +1,11 @@
 package akomissarova.archsample.di
 
-import akomissarova.archsample.database.UrbanAreaDao
-import akomissarova.archsample.model.UrbanArea
+import akomissarova.archsample.database.LocationsDatabase
 import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.repository.BasicCitiesRepository
 import akomissarova.archsample.repository.CitiesRepository
 import android.arch.lifecycle.ViewModelProvider
+import android.content.Context
 import retrofit2.Retrofit
 import retrofit2.converter.gson.GsonConverterFactory
 
@@ -17,16 +17,12 @@ object SimpleProvider {
         buildRetrofit()
     }
 
-    fun createCitiesViewModelFactory(): ViewModelProvider.Factory {
-        return CitiesViewModelFactory(getCitiesRepository())
+    fun createCitiesViewModelFactory(context: Context): ViewModelProvider.Factory {
+        return CitiesViewModelFactory(getCitiesRepository(context))
     }
 
-    private fun getCitiesRepository(): BasicCitiesRepository {
-        return CitiesRepository(createCitiesService(), object: UrbanAreaDao {
-            override fun saveCities(cities: List<UrbanArea>) {
-                //todo temporary stub
-            }
-        })
+    private fun getCitiesRepository(context: Context): BasicCitiesRepository {
+        return CitiesRepository(createCitiesService(), LocationsDatabase.getInstance(context).urbanAreaDao())
     }
 
     private fun createCitiesService(): CitiesService {

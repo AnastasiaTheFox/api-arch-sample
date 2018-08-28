@@ -34,7 +34,7 @@ class CitiesListFragment : Fragment() {
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        viewModel = ViewModelProviders.of(this, SimpleProvider.createCitiesViewModelFactory()).get(CitiesViewModel::class.java)
+        viewModel = ViewModelProviders.of(this, SimpleProvider.createCitiesViewModelFactory(context)).get(CitiesViewModel::class.java)
         viewModel?.getListMonad()?.observe(this, Observer { it?.let {
             it.fold({
                 //todo show error
