@@ -13,7 +13,11 @@ class MainActivity : AppCompatActivity() {
     }
 
     private fun addFragment() {
-        supportFragmentManager.beginTransaction().add(R.id.fragment_container, CitiesListFragment.newInstance(), CitiesListFragment.TAG).commit()
+        if (supportFragmentManager.findFragmentByTag(CitiesListFragment.TAG) == null) {
+            supportFragmentManager.beginTransaction()
+                    .add(R.id.fragment_container, CitiesListFragment.newInstance(), CitiesListFragment.TAG)
+                    .commit()
+        }
     }
 
     override fun onResume() {
