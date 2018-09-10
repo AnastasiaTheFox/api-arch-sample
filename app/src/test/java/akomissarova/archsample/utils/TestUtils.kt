@@ -13,4 +13,12 @@ object TestCities {
                 UrbanArea("London")
         )
     }
+
+    fun getNewCities(): List<UrbanArea> {
+        return listOf(
+                UrbanArea("Rome"),
+                UrbanArea("Dublin"),
+                UrbanArea("Prague")
+        )
+    }
 }

@@ -8,8 +8,10 @@ import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.repository.CitiesRepository
 import akomissarova.archsample.repository.EitherRight
 import akomissarova.archsample.utils.TestCities.getCities
+import akomissarova.archsample.utils.TestCities.getNewCities
 import akomissarova.archsample.utils.monads.Either
 import android.arch.core.executor.testing.InstantTaskExecutorRule
+import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
 import com.nhaarman.mockito_kotlin.doReturn
 import com.nhaarman.mockito_kotlin.mock
@@ -101,19 +103,24 @@ class CitiesRepositoryTest {
     }
 
     @Test
-    fun `getCities() returns list from service`() {
+    fun `getCities() returns list from db updated from service`() {
 
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         val cities = getCities()
+        val localSetCities = getNewCities()
         val content : Links = mock {
             on { list } doReturn cities
         }
         val response : UrbanAreaResponse = mock {
             on { links } doReturn content
         }
+        val daoLiveData = MutableLiveData<List<UrbanArea>>()
 
         whenever(service.getCities()).
                 thenReturn(Calls.response(response))
+        whenever(dao.getCities()).
+                thenReturn(localSetCities)
+        daoLiveData.value = localSetCities
 
         repository.getCitiesListMonad().observeForever(observer)
 
@@ -128,8 +135,10 @@ class CitiesRepositoryTest {
         })
 
         assertNull(error)
-        assertEquals(result, getCities())
+        assertEquals(result, getNewCities())
         verify(service).getCities()
+        verify(dao).clear()
         verify(dao).saveCities(cities)
+        verify(dao).getCities()
     }
 }

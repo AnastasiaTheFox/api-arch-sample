@@ -6,7 +6,6 @@ import akomissarova.archsample.di.SimpleProvider
 import akomissarova.archsample.viewmodel.CitiesViewModel
 import android.arch.lifecycle.Observer
 import android.arch.lifecycle.ViewModelProviders
-import android.content.Context
 import android.os.Bundle
 import android.support.v4.app.Fragment
 import android.support.v7.widget.LinearLayoutManager
@@ -30,11 +29,7 @@ class CitiesListFragment : Fragment() {
         super.onViewCreated(view, savedInstanceState)
         citiesList.layoutManager = LinearLayoutManager(context)
         citiesList.adapter = adapter
-    }
-
-    override fun onAttach(context: Context) {
-        super.onAttach(context)
-        viewModel = ViewModelProviders.of(this, SimpleProvider.createCitiesViewModelFactory(context)).get(CitiesViewModel::class.java)
+        viewModel = ViewModelProviders.of(this, SimpleProvider.createCitiesViewModelFactory(context!!)).get(CitiesViewModel::class.java)
         viewModel?.getListMonad()?.observe(this, Observer { it?.let {
             it.fold({
                 //todo show error

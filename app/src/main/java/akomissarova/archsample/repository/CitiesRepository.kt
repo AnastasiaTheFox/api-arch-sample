@@ -39,13 +39,15 @@ class CitiesRepository(private val service: CitiesService,
         try {
             val response = service.getCities().execute()
             response?.body()?.links?.list?.let {
+                citiesDao.clear()
                 citiesDao.saveCities(it)
-                return EitherRight(it)
+                return EitherRight(citiesDao.getCities())
             }
             response?.errorBody()?.let {
                 return EitherLeft(FetchError())
             }
         } catch (e: Exception) {
+            return EitherLeft(FetchError())
         }
         return EitherLeft(FetchError())
     }
