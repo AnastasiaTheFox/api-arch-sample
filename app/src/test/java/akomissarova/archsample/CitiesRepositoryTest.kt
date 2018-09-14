@@ -13,10 +13,7 @@ import akomissarova.archsample.utils.monads.Either
 import android.arch.core.executor.testing.InstantTaskExecutorRule
 import android.arch.lifecycle.MutableLiveData
 import android.arch.lifecycle.Observer
-import com.nhaarman.mockito_kotlin.doReturn
-import com.nhaarman.mockito_kotlin.mock
-import com.nhaarman.mockito_kotlin.verify
-import com.nhaarman.mockito_kotlin.whenever
+import com.nhaarman.mockito_kotlin.*
 import okhttp3.ResponseBody
 import org.junit.After
 import org.junit.Assert.*
@@ -103,7 +100,46 @@ class CitiesRepositoryTest {
     }
 
     @Test
-    fun `getCities() returns list from db updated from service`() {
+    fun `getCities() returns list from db updated from service if db empty`() {
+
+        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
+        val cities = getCities()
+        val localSetCities = listOf<UrbanArea>()
+        val content : Links = mock {
+            on { list } doReturn cities
+        }
+        val response : UrbanAreaResponse = mock {
+            on { links } doReturn content
+        }
+        val daoLiveData = MutableLiveData<List<UrbanArea>>()
+
+        whenever(service.getCities()).
+                thenReturn(Calls.response(response))
+        whenever(dao.getCities()).
+                thenReturn(localSetCities)
+        daoLiveData.value = localSetCities
+
+        repository.getCitiesListMonad().observeForever(observer)
+
+        assertTrue(repository.getCitiesListMonad().value is EitherRight)
+
+        var result: List<UrbanArea>? = null
+        var error: FetchError? = null
+        repository.getCitiesListMonad().value!!.fold({
+            error = it
+        }, {
+            result = it
+        })
+
+        assertNull(error)
+        verify(service).getCities()
+        verify(dao).clear()
+        verify(dao).saveCities(cities)
+        verify(dao, times(2)).getCities()
+    }
+
+    @Test
+    fun `getCities() returns list from db not updated from service if db not empty`() {
 
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         val cities = getCities()
@@ -136,9 +172,9 @@ class CitiesRepositoryTest {
 
         assertNull(error)
         assertEquals(result, getNewCities())
-        verify(service).getCities()
-        verify(dao).clear()
-        verify(dao).saveCities(cities)
+        verify(service, never()).getCities()
+        verify(dao, never()).clear()
+        verify(dao, never()).saveCities(cities)
         verify(dao).getCities()
     }
 }

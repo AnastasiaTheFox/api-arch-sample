@@ -36,6 +36,8 @@ class CitiesRepository(private val service: CitiesService,
     }
 
     private fun getCitiesAsyncMonad(): Either<FetchError, List<UrbanArea>> {
+        val citiesFromDb = citiesDao.getCities()
+        if (!citiesFromDb.isEmpty()) return EitherRight(citiesFromDb)
         try {
             val response = service.getCities().execute()
             response?.body()?.links?.list?.let {
