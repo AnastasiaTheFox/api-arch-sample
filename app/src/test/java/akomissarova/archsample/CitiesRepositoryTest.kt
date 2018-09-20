@@ -59,6 +59,10 @@ class CitiesRepositoryTest {
         whenever(service.getCities()).
                 thenReturn(Calls.response(Response.error(404, ResponseBody.create(null, ""))))
 
+        val daoLiveData = MutableLiveData<List<UrbanArea>>()
+        whenever(dao.getCities()).
+                thenReturn(daoLiveData)
+        daoLiveData.value = null
         repository.getCitiesListMonad().observeForever(observer)
 
         var result: List<UrbanArea>? = null
@@ -78,8 +82,14 @@ class CitiesRepositoryTest {
     fun `getCities() returns an error when exception is thrown`() {
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         val mockCall : Call<UrbanAreaResponse> = mock()
+
         whenever(service.getCities()).
                 thenReturn(mockCall)
+
+        val daoLiveData = MutableLiveData<List<UrbanArea>>()
+        whenever(dao.getCities()).
+                thenReturn(daoLiveData)
+        daoLiveData.value = null
 
         whenever(mockCall.execute()).
                 thenThrow(SocketException())
@@ -116,7 +126,7 @@ class CitiesRepositoryTest {
         whenever(service.getCities()).
                 thenReturn(Calls.response(response))
         whenever(dao.getCities()).
-                thenReturn(localSetCities)
+                thenReturn(daoLiveData)
         daoLiveData.value = localSetCities
 
         repository.getCitiesListMonad().observeForever(observer)
@@ -135,7 +145,7 @@ class CitiesRepositoryTest {
         verify(service).getCities()
         verify(dao).clear()
         verify(dao).saveCities(cities)
-        verify(dao, times(2)).getCities()
+        verify(dao).getCities()
     }
 
     @Test
@@ -155,7 +165,7 @@ class CitiesRepositoryTest {
         whenever(service.getCities()).
                 thenReturn(Calls.response(response))
         whenever(dao.getCities()).
-                thenReturn(localSetCities)
+                thenReturn(daoLiveData)
         daoLiveData.value = localSetCities
 
         repository.getCitiesListMonad().observeForever(observer)

@@ -6,7 +6,9 @@ import akomissarova.archsample.model.UrbanArea
 import akomissarova.archsample.network.CitiesService
 import akomissarova.archsample.utils.monads.Either
 import android.arch.lifecycle.LiveData
+import android.arch.lifecycle.MediatorLiveData
 import android.arch.lifecycle.MutableLiveData
+import android.arch.lifecycle.Transformations
 import kotlinx.coroutines.experimental.async
 import kotlinx.coroutines.experimental.runBlocking
 
@@ -16,15 +18,26 @@ class CitiesRepository(private val service: CitiesService,
     private var citiesDataMonad: MutableLiveData<Either<FetchError, List<UrbanArea>>>? = null
 
     private fun initCitiesDataMonad(): MutableLiveData<Either<FetchError, List<UrbanArea>>> {
-        val data = MutableLiveData<Either<FetchError, List<UrbanArea>>>()
-        runBlocking {
-            async {
-                getCitiesAsyncMonad()
-            }.await()
-                    .let {
-                        data.value = it
-                    }
+        val data = MediatorLiveData<Either<FetchError, List<UrbanArea>>>()
+        val dbData = Transformations.map(citiesDao.getCities()) { cities -> cities?.let {
+            return@map EitherRight(cities)
         }
+            return@map EitherLeft(FetchError())}
+        data.addSource(dbData) { value ->  value?.fold({
+            runBlocking {
+                async {
+                    fetchCitiesFromServer()
+                }.await()
+                        .let {
+                            if (it is EitherLeft) {
+                                data.value = it
+                            }
+                        }
+            }
+        }, {
+            data.value = EitherRight(it)
+        }) }
+
         return data
     }
 
@@ -35,15 +48,13 @@ class CitiesRepository(private val service: CitiesService,
         return citiesDataMonad!!
     }
 
-    private fun getCitiesAsyncMonad(): Either<FetchError, List<UrbanArea>> {
-        val citiesFromDb = citiesDao.getCities()
-        if (!citiesFromDb.isEmpty()) return EitherRight(citiesFromDb)
+    private fun fetchCitiesFromServer(): Either<FetchError, List<UrbanArea>> {
         try {
             val response = service.getCities().execute()
             response?.body()?.links?.list?.let {
                 citiesDao.clear()
                 citiesDao.saveCities(it)
-                return EitherRight(citiesDao.getCities())
+                return EitherRight(it)
             }
             response?.errorBody()?.let {
                 return EitherLeft(FetchError())
