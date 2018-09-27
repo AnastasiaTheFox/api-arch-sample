@@ -112,7 +112,10 @@ class CitiesRepositoryTest {
     @Test
     fun `getCities() returns list from db updated from service if db empty`() {
 
-        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
+        val allFinalResults = mutableListOf<Either<FetchError, List<UrbanArea>>>()
+        val observer : Observer<Either<FetchError, List<UrbanArea>>> = Observer {
+            allFinalResults.add(it!!)
+        }
         val cities = getCities()
         val localSetCities = listOf<UrbanArea>()
         val content : Links = mock {
@@ -130,6 +133,8 @@ class CitiesRepositoryTest {
         daoLiveData.value = localSetCities
 
         repository.getCitiesListMonad().observeForever(observer)
+        //todo this is an assumtion about how the framework works
+        daoLiveData.value = getCities()
 
         assertTrue(repository.getCitiesListMonad().value is EitherRight)
 
@@ -146,6 +151,7 @@ class CitiesRepositoryTest {
         verify(dao).clear()
         verify(dao).saveCities(cities)
         verify(dao).getCities()
+        assertTrue(allFinalResults.size == 1)
     }
 
     @Test

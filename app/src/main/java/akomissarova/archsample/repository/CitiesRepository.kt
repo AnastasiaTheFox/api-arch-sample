@@ -20,7 +20,8 @@ class CitiesRepository(private val service: CitiesService,
     private fun initCitiesDataMonad(): MutableLiveData<Either<FetchError, List<UrbanArea>>> {
         val data = MediatorLiveData<Either<FetchError, List<UrbanArea>>>()
         val dbData = Transformations.map(citiesDao.getCities()) { cities -> cities?.let {
-            return@map EitherRight(cities)
+            if (!cities.isEmpty())
+                return@map EitherRight(cities)
         }
             return@map EitherLeft(FetchError())}
         data.addSource(dbData) { value ->  value?.fold({
