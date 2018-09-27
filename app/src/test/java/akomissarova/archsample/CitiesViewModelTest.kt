@@ -48,7 +48,7 @@ class CitiesViewModelTest {
     @Test
     fun `getList() returns cities list liveData with correct cities`() {
         val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
-        val citiesData = getMockCitiesMonad()
+        val citiesData = getMockLiveDataWithDefaultValue()
         runBlocking {
             `when`(repository.getCitiesListMonad()).thenReturn(citiesData)
             viewModel.getListMonad().observeForever(observer)
@@ -58,16 +58,11 @@ class CitiesViewModelTest {
         }
 
         verify(observer).onChanged(citiesData.value)
+        //live data from repository and from view model should be different
         assertNotSame(citiesData, viewModel.getListMonad())
     }
 
-    fun getMockCities(): LiveData<List<UrbanArea>> {
-        val citiesData = MutableLiveData<List<UrbanArea>>()
-        citiesData.value = defaultCities
-        return citiesData
-    }
-
-    fun getMockCitiesMonad(): LiveData<Either<FetchError, List<UrbanArea>>> {
+    fun getMockLiveDataWithDefaultValue(): LiveData<Either<FetchError, List<UrbanArea>>> {
         val citiesData = MutableLiveData<Either<FetchError, List<UrbanArea>>>()
         citiesData.value = Either.Right(defaultCities)
         return citiesData

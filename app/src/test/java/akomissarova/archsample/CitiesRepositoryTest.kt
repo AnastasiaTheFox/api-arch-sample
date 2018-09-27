@@ -39,12 +39,15 @@ class CitiesRepositoryTest {
     private lateinit var service : CitiesService
     @Mock
     private lateinit var dao: UrbanAreaDao
+    @Mock
+    private lateinit var observer: Observer<Either<FetchError, List<UrbanArea>>>
 
     @Before
     fun setup() {
         service = mock()
         dao = mock()
         repository = CitiesRepository(service, dao)
+        observer = mock()
     }
 
     @After
@@ -55,57 +58,34 @@ class CitiesRepositoryTest {
     @Test
     fun `getCities() returns error when error is received`() {
 
-        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
-        whenever(service.getCities()).
-                thenReturn(Calls.response(Response.error(404, ResponseBody.create(null, ""))))
+        service.mockReturnError(404)
 
-        val daoLiveData = MutableLiveData<List<UrbanArea>>()
-        whenever(dao.getCities()).
-                thenReturn(daoLiveData)
+        val daoLiveData = dao.getMockListLiveData()
+
         daoLiveData.value = null
-        repository.getCitiesListMonad().observeForever(observer)
+        repository.observeList(observer)
 
-        var result: List<UrbanArea>? = null
-        var error: FetchError? = null
-        repository.getCitiesListMonad().value!!.fold({
-            error = it
-        }, {
-            result = it
-        })
+        repository.verifyListResultError()
 
-        assertNull(result)
-        assertNotNull(error)
         verify(service).getCities()
     }
 
     @Test
     fun `getCities() returns an error when exception is thrown`() {
-        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         val mockCall : Call<UrbanAreaResponse> = mock()
 
         whenever(service.getCities()).
                 thenReturn(mockCall)
 
-        val daoLiveData = MutableLiveData<List<UrbanArea>>()
-        whenever(dao.getCities()).
-                thenReturn(daoLiveData)
+        val daoLiveData = dao.getMockListLiveData()
         daoLiveData.value = null
 
         whenever(mockCall.execute()).
                 thenThrow(SocketException())
 
-        repository.getCitiesListMonad().observeForever(observer)
+        repository.observeList(observer)
+        repository.verifyListResultError()
 
-        var result: List<UrbanArea>? = null
-        var error: FetchError? = null
-        repository.getCitiesListMonad().value!!.fold({
-            error = it
-        }, {
-            result = it
-        })
-
-        assertNull(result)
-        assertNotNull(error)
         verify(service).getCities()
     }
 
@@ -113,84 +93,112 @@ class CitiesRepositoryTest {
     fun `getCities() returns list from db updated from service if db empty`() {
 
         val allFinalResults = mutableListOf<Either<FetchError, List<UrbanArea>>>()
-        val observer : Observer<Either<FetchError, List<UrbanArea>>> = Observer {
+        val realObserver : Observer<Either<FetchError, List<UrbanArea>>> = Observer {
             allFinalResults.add(it!!)
         }
+        val emptylocalCities = listOf<UrbanArea>()
+        val daoLiveData = dao.getMockListLiveData()
         val cities = getCities()
-        val localSetCities = listOf<UrbanArea>()
-        val content : Links = mock {
-            on { list } doReturn cities
-        }
-        val response : UrbanAreaResponse = mock {
-            on { links } doReturn content
-        }
-        val daoLiveData = MutableLiveData<List<UrbanArea>>()
 
-        whenever(service.getCities()).
-                thenReturn(Calls.response(response))
-        whenever(dao.getCities()).
-                thenReturn(daoLiveData)
-        daoLiveData.value = localSetCities
+        service.returnsMockCitieList(cities)
 
-        repository.getCitiesListMonad().observeForever(observer)
+        daoLiveData.value = emptylocalCities
+
+        repository.observeList(realObserver)
         //todo this is an assumtion about how the framework works
         daoLiveData.value = getCities()
 
-        assertTrue(repository.getCitiesListMonad().value is EitherRight)
+        repository.verifyListResult(getCities())
 
-        var result: List<UrbanArea>? = null
-        var error: FetchError? = null
-        repository.getCitiesListMonad().value!!.fold({
-            error = it
-        }, {
-            result = it
-        })
-
-        assertNull(error)
         verify(service).getCities()
-        verify(dao).clear()
-        verify(dao).saveCities(cities)
-        verify(dao).getCities()
+        dao.verifyRewriteCitiesList(cities)
+
         assertTrue(allFinalResults.size == 1)
     }
 
     @Test
     fun `getCities() returns list from db not updated from service if db not empty`() {
 
-        val observer : Observer<Either<FetchError, List<UrbanArea>>> = mock()
         val cities = getCities()
-        val localSetCities = getNewCities()
-        val content : Links = mock {
-            on { list } doReturn cities
-        }
-        val response : UrbanAreaResponse = mock {
-            on { links } doReturn content
-        }
-        val daoLiveData = MutableLiveData<List<UrbanArea>>()
+        val localCities = getNewCities()
 
-        whenever(service.getCities()).
-                thenReturn(Calls.response(response))
-        whenever(dao.getCities()).
-                thenReturn(daoLiveData)
-        daoLiveData.value = localSetCities
+        val daoLiveData = dao.getMockListLiveData()
 
-        repository.getCitiesListMonad().observeForever(observer)
+        service.returnsMockCitieList(cities)
 
-        assertTrue(repository.getCitiesListMonad().value is EitherRight)
+        daoLiveData.value = localCities
 
-        var result: List<UrbanArea>? = null
-        var error: FetchError? = null
-        repository.getCitiesListMonad().value!!.fold({
-            error = it
-        }, {
-            result = it
-        })
+        repository.observeList(observer)
+        repository.verifyListResult(getNewCities())
 
-        assertNull(error)
-        assertEquals(result, getNewCities())
         verify(service, never()).getCities()
-        verify(dao, never()).clear()
-        verify(dao, never()).saveCities(cities)
-        verify(dao).getCities()
+        dao.verifyNeverUpdatesList()
     }
+}
+
+private fun UrbanAreaDao.verifyNeverUpdatesList() {
+    verify(this, never()).clear()
+    verify(this, never()).saveCities(any())
+    verify(this).getCities()
+}
+
+private fun UrbanAreaDao.verifyRewriteCitiesList(cities: List<UrbanArea>) {
+    verify(this).clear()
+    verify(this).saveCities(cities)
+    verify(this).getCities()
+}
+
+private fun CitiesRepository.verifyListResult(cities: List<UrbanArea>) {
+    assertTrue(getCitiesListMonad().value is EitherRight)
+    var result: List<UrbanArea>? = null
+    var error: FetchError? = null
+    getCitiesListMonad().value!!.fold({
+        error = it
+    }, {
+        result = it
+    })
+
+    assertNull(error)
+    assertEquals(result, cities)
+}
+
+private fun CitiesService.returnsMockCitieList(cities: List<UrbanArea>) {
+    val content : Links = mock {
+        on { list } doReturn cities
+    }
+    val response : UrbanAreaResponse = mock {
+        on { links } doReturn content
+    }
+    whenever(getCities()).
+            thenReturn(Calls.response(response))
+}
+
+private fun CitiesRepository.verifyListResultError() {
+    var result: List<UrbanArea>? = null
+    var error: FetchError? = null
+    getCitiesListMonad().value!!.fold({
+        error = it
+    }, {
+        result = it
+    })
+
+    assertNull(result)
+    assertNotNull(error)
+}
+
+private fun CitiesRepository.observeList(observer: Observer<Either<FetchError, List<UrbanArea>>>) {
+    getCitiesListMonad().observeForever(observer)
+}
+
+private fun UrbanAreaDao.getMockListLiveData(): MutableLiveData<List<UrbanArea>> {
+    val daoLiveData = MutableLiveData<List<UrbanArea>>()
+    whenever(getCities()).
+            thenReturn(daoLiveData)
+    return daoLiveData
+}
+
+private fun CitiesService.mockReturnError(errorCode: Int) {
+    whenever(getCities()).
+            thenReturn(Calls.response(Response.error(errorCode, ResponseBody.create(null, ""))))
+
 }
